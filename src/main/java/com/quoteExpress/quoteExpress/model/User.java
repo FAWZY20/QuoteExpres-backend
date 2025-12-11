@@ -1,19 +1,20 @@
 package com.quoteExpress.quoteExpress.model;
 
 
+import ch.qos.logback.core.net.server.Client;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private UUID id = UUID.randomUUID();
 
     @Column(name = "name", nullable = true)
     private String name;
@@ -58,7 +59,11 @@ public class User {
     @JsonIgnore
     private List<Devis> devisList = new ArrayList<>();
 
-    public User(Long id, String name, String lastName, String companyName, String address, String zipCode,
+    @OneToMany(mappedBy = "users", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Clients> ClientList = new ArrayList<>();
+
+    public User(UUID id, String name, String lastName, String companyName, String address, String zipCode,
                 String city, String country, String phoneNumber, String vatNumber, String siretNumber, String logoUrl,
                 String email, String password, List<Devis> devisList) {
         this.id = id;
@@ -79,6 +84,10 @@ public class User {
     }
 
     public User(){}
+
+    public UUID getId() {
+        return id;
+    }
 
     public String getName() {
         return name;

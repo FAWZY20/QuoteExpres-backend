@@ -1,5 +1,5 @@
 CREATE TABLE users (
-    id BIGSERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY,
     name VARCHAR(255),
     lastName VARCHAR(255),
     companyName VARCHAR(255),

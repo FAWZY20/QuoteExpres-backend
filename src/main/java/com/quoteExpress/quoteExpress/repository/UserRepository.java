@@ -9,9 +9,9 @@ import java.util.UUID;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    User findUserById(Long userId);
+    User findUserById(UUID userId);
 
     User findUserByEmail(String email);
 
-    void deleteById(Long userID);
+    void deleteById(UUID userID);
 }

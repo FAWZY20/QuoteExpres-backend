@@ -18,30 +18,25 @@ import java.util.UUID;
 public class Devis {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private UUID id = UUID.randomUUID();
 
     @ManyToOne
     @JoinColumn(name = "utilisateurid")
     private User users;
-    
-    @Column(name = "clientname")
-    private String clientName;
 
-    @Column(name = "clientadress")
-    private String clientAdress;
+    @Column(name = "titredevis")
+    private String titreDevis;
 
-    @Column(name = "clientzip")
-    private String clientZip;
+    @Column(name = "status")
+    @Enumerated(EnumType.STRING)
+    private Status status =  Status.EN_ATTENTE;
 
-    @Column(name = "clientcity")
-    private String clientCity;
+    @Column(name = "numerofacture", unique = true)
+    private Long numeroFacture;
 
-    @Column(name = "clientsiret")
-    private String clientSiret;
-
-    @Column(name = "clienttel")
-    private String clientTel;
+    @ManyToOne
+    @JoinColumn(name = "clientid")
+    private Clients client;
 
     @Column(name = "datedevis")
     private LocalDate dateDevis;
@@ -62,17 +57,13 @@ public class Devis {
     @Column(name = "totalttc")
     private BigDecimal  totalTtc;
 
-    public Devis(Long id, User user, String clientName, String clientAdress, String clientZip, String clientCity,
-                 String clientSiret, String clientTel, LocalDate dateDevis, List<Product> listProduct,
+    public Devis(UUID id, User user,String titreDevis, Status status, Long numeroFacture, LocalDate dateDevis, List<Product> listProduct,
                  String info, BigDecimal  totalHt, BigDecimal  totalTva, BigDecimal  totalTtc) {
         this.id = id;
         this.users = users;
-        this.clientName = clientName;
-        this.clientAdress = clientAdress;
-        this.clientZip = clientZip;
-        this.clientCity = clientCity;
-        this.clientSiret = clientSiret;
-        this.clientTel = clientTel;
+        this.titreDevis = titreDevis;
+        this.numeroFacture = numeroFacture;
+        this.status = status;
         this.dateDevis = dateDevis;
         this.listProduct = listProduct;
         this.info = info;
@@ -83,6 +74,8 @@ public class Devis {
 
     public Devis(){}
 
+    public UUID getId() { return id; }
+
     public User getUsers() {
         return users;
     }
@@ -91,53 +84,33 @@ public class Devis {
         this.users = users;
     }
 
-    public String getClientName() {
-        return clientName;
+    public Long getNumeroFacture() {
+        return numeroFacture;
     }
 
-    public void setClientName(String clientName) {
-        this.clientName = clientName;
+    public void setNumeroFacture(Long numeroFacture) {
+        this.numeroFacture = numeroFacture;
     }
 
-    public String getClientAdress() {
-        return clientAdress;
+    public Status getStatus() {
+        return status;
     }
 
-    public void setClientAdress(String clientAdress) {
-        this.clientAdress = clientAdress;
+    public void setStatus(Status status) {
+        this.status = status;
     }
 
-    public String getClientZip() {
-        return clientZip;
+    public Clients getClient() {
+        return client;
     }
 
-    public void setClientZip(String clientZip) {
-        this.clientZip = clientZip;
+    public void setClient(Clients client) {
+        this.client = client;
     }
 
-    public String getClientCity() {
-        return clientCity;
-    }
+    public String getTitreDevis() { return titreDevis; }
 
-    public void setClientCity(String clientCity) {
-        this.clientCity = clientCity;
-    }
-
-    public String getClientSiret() {
-        return clientSiret;
-    }
-
-    public void setClientSiret(String clientSiret) {
-        this.clientSiret = clientSiret;
-    }
-
-    public String getClientTel() {
-        return clientTel;
-    }
-
-    public void setClientTel(String clientTel) {
-        this.clientTel = clientTel;
-    }
+    public void setTitreDevis(String titreDevis) { this.titreDevis = titreDevis; }
 
     public LocalDate getDateDevis() {
         return dateDevis;

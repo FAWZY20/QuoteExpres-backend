@@ -4,7 +4,9 @@ package com.quoteExpress.quoteExpress.sevice;
 import com.quoteExpress.quoteExpress.DTO.Product;
 import com.quoteExpress.quoteExpress.controler.DevisControler;
 import com.quoteExpress.quoteExpress.model.Devis;
+import com.quoteExpress.quoteExpress.model.Status;
 import com.quoteExpress.quoteExpress.model.User;
+import com.quoteExpress.quoteExpress.repository.ClientRepository;
 import com.quoteExpress.quoteExpress.repository.DevisRepository;
 import com.quoteExpress.quoteExpress.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,25 +19,35 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class DevisService implements DevisControler {
 
     private final DevisRepository devisRepository;
     private final UserRepository userRepository;
+    private final ClientRepository clientRepository;
 
     @Autowired
-    public DevisService(DevisRepository devisRepository, UserRepository userRepository) {
+    public DevisService(DevisRepository devisRepository, UserRepository userRepository, ClientRepository clientRepository) {
         this.devisRepository = devisRepository;
         this.userRepository = userRepository;
+        this.clientRepository = clientRepository;
     }
 
     @Override
-    public ResponseEntity addDevis(Long userId, Devis devis) throws Exception {
+    public ResponseEntity addDevis(UUID userId, Devis devis) throws Exception {
         try {
             User user = userRepository.findUserById(userId);
+            devis.setNumeroFacture(generateNumeroFacture());
             devis.setUsers(user);
+
+            if(clientRepository.findByTelephoneclient(devis.getClient().getTelephoneclient()) == null){
+              clientRepository.save(devis.getClient());
+            }
+
             devisRepository.save(devis);
+
             return ResponseEntity.ok(devis);
         } catch (Exception e) {
             throw new Exception(e);
@@ -43,16 +55,16 @@ public class DevisService implements DevisControler {
     }
 
     @Override
-    public ResponseEntity getDevis(Long devisId) throws Exception {
+    public ResponseEntity getDevis(UUID devisId) throws Exception {
         try {
-            return ResponseEntity.ok(devisRepository.findById(devisId));
+            return ResponseEntity.ok(devisRepository.findDevisById(devisId));
         }catch (Exception e){
             throw new Exception(e);
         }
     }
 
     @Override
-    public ResponseEntity getListDevisByUserId(Long userId) throws Exception {
+    public ResponseEntity getListDevisByUserId(UUID userId) throws Exception {
         try {
             List<Devis> devis = devisRepository.findDevisByUserId(userId);
             return ResponseEntity.ok(devis);
@@ -62,9 +74,31 @@ public class DevisService implements DevisControler {
     }
 
     @Override
-    public ResponseEntity deleteDevis(Long devisId) throws Exception {
+    public ResponseEntity getListDevisByUserIdAndYears(UUID userId, int year) throws Exception {
         try {
-            devisRepository.deleteById(devisId);
+            LocalDate yearStart = LocalDate.of(year, 1, 1);
+            LocalDate yearEnd = LocalDate.of(year, 12, 31);
+            List<Devis> devis = devisRepository.findDevisByUserIdAndDate(userId, yearStart, yearEnd);
+            return ResponseEntity.ok(devis);
+        }catch (Exception e){
+            throw new Exception();
+        }
+    }
+
+    @Override
+    public ResponseEntity getListDevisByUserIdAndStatus(UUID userId, Status status) throws Exception {
+        try {
+            List<Devis> devis = devisRepository.findByUsers_IdAndStatus(userId, status);
+            return ResponseEntity.ok(devis);
+        }catch (Exception e){
+            throw new Exception(e);
+        }
+    }
+
+    @Override
+    public ResponseEntity deleteDevis(UUID devisId) throws Exception {
+        try {
+            devisRepository.deleteDevisById(devisId);
             return ResponseEntity.ok("le devis a bien etait supprimer");
         }catch (Exception e){
             throw new Exception(e);
@@ -72,19 +106,14 @@ public class DevisService implements DevisControler {
     }
 
     @Override
-    public ResponseEntity updateDevis(Long userId, Devis devis) throws Exception {
+    public ResponseEntity updateDevis(UUID userId, Devis devis) throws Exception {
         try {
             Devis lastdevis = devisRepository.findDevisById(userId);
-            lastdevis.setClientName(devis.getClientName());
-            lastdevis.setClientAdress(devis.getClientAdress());
-            lastdevis.setClientZip(devis.getClientZip());
-            lastdevis.setClientCity(devis.getClientCity());
-            lastdevis.setClientSiret(devis.getClientSiret());
-            lastdevis.setClientTel(devis.getClientTel());
-            lastdevis.setInfo(devis.getInfo());
 
+            lastdevis.setTitreDevis(devis.getTitreDevis());
+            lastdevis.setClient(devis.getClient());
+            lastdevis.setInfo(devis.getInfo());   
             devisRepository.save(lastdevis);
-
             return ResponseEntity.ok(lastdevis);
 
         } catch (Exception e) {
@@ -93,7 +122,7 @@ public class DevisService implements DevisControler {
     }
 
     @Override
-    public ResponseEntity updateDate(Long userId, Map<String, String> date) throws Exception {
+    public ResponseEntity updateDate(UUID userId, Map<String, String> date) throws Exception {
         try {
             Devis lastdevis = devisRepository.findDevisById(userId);
 
@@ -111,10 +140,9 @@ public class DevisService implements DevisControler {
     }
 
     @Override
-    public ResponseEntity addProduct(Long devisId, Product product) throws Exception {
+    public ResponseEntity addProduct(UUID devisId, Product product) throws Exception {
         try {
-            Devis devis = devisRepository.findById(devisId)
-                    .orElseThrow(() -> new RuntimeException("Devis introuvable"));
+            Devis devis = devisRepository.findDevisById(devisId);
 
             List<Product> products = devis.getListProduct();
 
@@ -133,7 +161,7 @@ public class DevisService implements DevisControler {
     }
 
     @Override
-    public ResponseEntity deleteProduct(Long devisId, int indexProduct) throws Exception {
+    public ResponseEntity deleteProduct(UUID devisId, int indexProduct) throws Exception {
         try {
             Devis devis = devisRepository.findDevisById(devisId);
 
@@ -153,4 +181,17 @@ public class DevisService implements DevisControler {
             throw new RuntimeException(e);
         }
     }
+
+    public Long generateNumeroFacture() {
+        Long min = 100000L;
+        Long max = 999999L;
+        Long numero;
+
+        do {
+            numero = min + (long) (Math.random() * ((max - min) + 1));
+        } while (devisRepository.existsByNumeroFacture(numero));
+
+        return numero;
+    }
+
 }

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
    public class UserService implements UserControler {
@@ -43,7 +44,7 @@ import java.util.Map;
     }
 
     @Override
-    public ResponseEntity getUser(Long userID) throws Exception {
+    public ResponseEntity getUser(UUID userID) throws Exception {
         try {
             User user = userRepository.findUserById(userID);
             if (user != null){
@@ -57,7 +58,21 @@ import java.util.Map;
     }
 
     @Override
-    public ResponseEntity deletUser(Long userID) throws Exception {
+    public ResponseEntity getUserByEmail(String email) throws Exception {
+        try {
+            User user = userRepository.findUserByEmail(email);
+            if (user != null){
+                return ResponseEntity.ok(user);
+            }else {
+                return ResponseEntity.ofNullable("aucun utilisteur trouver");
+            }
+        }catch (Exception e){
+            throw new Exception("une erreur ces produit lors de la recherche de l'tuilisateur", e);
+        }
+    }
+
+    @Override
+    public ResponseEntity deletUser(UUID userID) throws Exception {
         try {
             userRepository.deleteById(userID);
             return ResponseEntity.ok("l'utilisateur a etait supprimer");
@@ -79,7 +94,7 @@ import java.util.Map;
     }
 
     @Override
-    public ResponseEntity updatePassword(Long userid, Map<String, String> newPwd) throws Exception {
+    public ResponseEntity updatePassword(UUID userid, Map<String, String> newPwd) throws Exception {
         try {
             String newPassword = newPwd.get("newPassword");
             User user = userRepository.findUserById(userid);
@@ -92,7 +107,7 @@ import java.util.Map;
     }
 
     @Override
-    public ResponseEntity updateUser(Long userid, User user) throws RuntimeException {
+    public ResponseEntity updateUser(UUID userid, User user) throws RuntimeException {
         try {
             User existingUser = userRepository.findUserById(userid);
 

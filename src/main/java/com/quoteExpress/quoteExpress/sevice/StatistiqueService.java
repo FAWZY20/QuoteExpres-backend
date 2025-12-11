@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class StatistiqueService implements StatistiqueControler {
@@ -19,29 +20,9 @@ public class StatistiqueService implements StatistiqueControler {
     public StatistiqueService(DevisRepository devisRepository) {
         this.devisRepository = devisRepository;
     }
-
-    private static Integer getMonthInteger(String month) {
-        Map<String, Integer> monthMap = Map.ofEntries(
-                Map.entry("janvier", 1),
-                Map.entry("février", 2),
-                Map.entry("mars", 3),
-                Map.entry("avril", 4),
-                Map.entry("mai", 5),
-                Map.entry("juin", 6),
-                Map.entry("juillet", 7),
-                Map.entry("août", 8),
-                Map.entry("septembre", 9),
-                Map.entry("octobre", 10),
-                Map.entry("novembre", 11),
-                Map.entry("décembre", 12)
-        );
-
-        Integer newMonth = monthMap.get(month);
-        return newMonth;
-    }
     
     @Override
-    public ResponseEntity totalDevisDay(Long userId) throws Exception {
+    public ResponseEntity totalDevisDay(UUID userId) throws Exception {
         try {
             LocalDate date = LocalDate.now();
             return ResponseEntity.ok(devisRepository.countDevisToday(userId, date));
@@ -51,23 +32,15 @@ public class StatistiqueService implements StatistiqueControler {
     }
 
     @Override
-    public ResponseEntity totalDevisMonth(Long userId, String month) throws Exception {
+    public ResponseEntity totalDevisMonth(UUID userId, Integer month) throws Exception {
         try {
-            if (month == null || month.isEmpty()) {
+            if (month == null || month == 0) {
                 return ResponseEntity.badRequest().body("Le mois est obligatoire");
-            }
-
-            month = month.toLowerCase().trim();
-
-            Integer newMonth = getMonthInteger(month);
-
-            if (newMonth == null) {
-                return ResponseEntity.badRequest().body("Mois inconnu : " + month);
             }
 
             int year = LocalDate.now().getYear();
 
-            YearMonth yearMonth = YearMonth.of(year, newMonth);
+            YearMonth yearMonth = YearMonth.of(year, month);
             LocalDate monthStart = yearMonth.atDay(1);
             LocalDate monthEnd = yearMonth.atEndOfMonth();
 
@@ -78,7 +51,7 @@ public class StatistiqueService implements StatistiqueControler {
     }
 
     @Override
-    public ResponseEntity totalDevisYear(Long userId, Integer year) throws Exception {
+    public ResponseEntity totalDevisYear(UUID userId, Integer year) throws Exception {
        try {
            if (year == null) {
                return ResponseEntity.badRequest().body("L'annee est obligatoire");
@@ -94,9 +67,19 @@ public class StatistiqueService implements StatistiqueControler {
     }
 
     @Override
-    public ResponseEntity totalPrixDevisDay(Long userId) throws Exception {
+    public ResponseEntity totalFacturee(UUID userId) throws Exception {
+        try {
+            return ResponseEntity.ok(devisRepository.sumFacture(userId));
+        }catch (Exception e){
+            throw new Exception(e);
+        }
+    }
+
+    @Override
+    public ResponseEntity totalPrixDevisDay(UUID userId) throws Exception {
         try {
             LocalDate date = LocalDate.now();
+            System.out.println(date);
             return ResponseEntity.ok(devisRepository.sumTotalDevisToday(userId, date));
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -104,23 +87,15 @@ public class StatistiqueService implements StatistiqueControler {
     }
 
     @Override
-    public ResponseEntity totalPrixDevisMonth(Long userId, String month) throws Exception {
+    public ResponseEntity totalPrixDevisMonth(UUID userId, Integer month) throws Exception {
         try {
-            if (month == null || month.isEmpty()) {
+            if (month == null || month == 0) {
                 return ResponseEntity.badRequest().body("Le mois est obligatoire");
-            }
-
-            month = month.toLowerCase().trim();
-
-            Integer newMonth = getMonthInteger(month);
-
-            if (newMonth == null) {
-                return ResponseEntity.badRequest().body("Mois inconnu : " + month);
             }
 
             int year = LocalDate.now().getYear();
 
-            YearMonth yearMonth = YearMonth.of(year, newMonth);
+            YearMonth yearMonth = YearMonth.of(year, month);
             LocalDate monthStart = yearMonth.atDay(1);
             LocalDate monthEnd = yearMonth.atEndOfMonth();
 
@@ -131,7 +106,7 @@ public class StatistiqueService implements StatistiqueControler {
     }
 
     @Override
-    public ResponseEntity totalPrixDevisYear(Long userId, Integer year) throws Exception {
+    public ResponseEntity totalPrixDevisYear(UUID userId, Integer year) throws Exception {
         try {
             if (year == null) {
                 return ResponseEntity.badRequest().body("L'annee est obligatoire");
