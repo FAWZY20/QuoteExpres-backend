@@ -9,6 +9,7 @@ import com.quoteExpress.quoteExpress.model.User;
 import com.quoteExpress.quoteExpress.repository.ClientRepository;
 import com.quoteExpress.quoteExpress.repository.DevisRepository;
 import com.quoteExpress.quoteExpress.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -26,28 +27,24 @@ public class DevisService implements DevisControler {
 
     private final DevisRepository devisRepository;
     private final UserRepository userRepository;
-    private final ClientRepository clientRepository;
+    private final ClientService clientService;
 
     @Autowired
-    public DevisService(DevisRepository devisRepository, UserRepository userRepository, ClientRepository clientRepository) {
+    public DevisService(DevisRepository devisRepository, UserRepository userRepository, ClientRepository clientRepository, ClientService clientService) {
         this.devisRepository = devisRepository;
         this.userRepository = userRepository;
-        this.clientRepository = clientRepository;
+        this.clientService = clientService;
     }
 
     @Override
+    @Transactional
     public ResponseEntity addDevis(UUID userId, Devis devis) throws Exception {
         try {
             User user = userRepository.findUserById(userId);
             devis.setNumeroFacture(generateNumeroFacture());
             devis.setUsers(user);
-
-            if(clientRepository.findByTelephoneclient(devis.getClient().getTelephoneclient()) == null){
-              clientRepository.save(devis.getClient());
-            }
-
+            clientService.addClient(devis.getClient());
             devisRepository.save(devis);
-
             return ResponseEntity.ok(devis);
         } catch (Exception e) {
             throw new Exception(e);

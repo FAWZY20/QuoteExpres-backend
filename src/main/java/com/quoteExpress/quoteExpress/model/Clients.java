@@ -45,6 +45,14 @@ public class Clients {
         this.telephoneclient = telephoneclient;
     }
 
+    public UUID getId() {
+        return id;
+    }
+
+    public Integer getCodepostalclient() {
+        return codepostalclient;
+    }
+
     public User getUsers() {
         return users;
     }
